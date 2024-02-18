@@ -92,7 +92,7 @@ def collect_basic_details():
     
     with curr:
         # Currency dropdown
-        currency_options = ["AUD", "INR", "USD", "EUR", "GBP", "CAD", "OTHER"]
+        currency_options = ["AUD", "INR", "USD", "EUR", "GBP", "CAD", "OTH"]
         selected_currency = st.selectbox("Currency:", currency_options, index=0)
 
     with fuel_unit:
