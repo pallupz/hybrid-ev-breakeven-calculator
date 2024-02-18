@@ -71,9 +71,10 @@ def set_page_header_format():
             }
         </style>
         <div class="navbar">
-            <a href="https://www.example.com">About</a>
             <a href="https://www.example.com">LinkedIn</a>
+            <a> | </a>
             <a href="https://www.example.com">Github</a>
+            <a> | </a>
             <a href="https://www.example.com">Buy me a coffee</a>
         </div>
     """
@@ -124,7 +125,7 @@ def collect_basic_details():
         calculate_at_year_level = st.checkbox("Change average annual distance", value=simulate_fuel_increase, disabled=simulate_fuel_increase)
         
         if calculate_at_year_level:
-            annual_distance_label = "Average annual distance driven"
+            annual_distance_label = "Average annual distance driven (km)"
             annual_distance = st.number_input(annual_distance_label, min_value=0, step=1000, key="annual_distance", value=15000 if calculate_at_year_level else None)
         else:
             annual_distance = 15000
