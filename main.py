@@ -1,51 +1,44 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022)
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 import streamlit as st
 from streamlit.logger import get_logger
+from utils import set_page_header_format, collect_basic_details, \
+                  collect_car_details, calculate_distance_fuel_car_could_travel, \
+                  calculate_breakeven_distance, calculate_detailed_cost
 
 LOGGER = get_logger(__name__)
 
 
 def run():
-    st.set_page_config(
-        page_title="Hello",
-        page_icon="👋",
-    )
+    set_page_header_format()
+    
+    settings = collect_basic_details()
 
-    st.write("# Welcome to Streamlit! 👋")
+    # st.write(settings)
 
-    st.sidebar.success("Select a demo above.")
+    hybrid = collect_car_details('Hybrid', settings, defaults={'price': 45000, 'mileage': 4.0})
+    fuel = collect_car_details('Fuel', settings, defaults={'price': 40000, 'mileage': 6.0})
+    
 
-    st.markdown(
-        """
-        Streamlit is an open-source app framework built specifically for
-        Machine Learning and Data Science projects.
-        **👈 Select a demo from the sidebar** to see some examples
-        of what Streamlit can do!
-        ### Want to learn more?
-        - Check out [streamlit.io](https://streamlit.io)
-        - Jump into our [documentation](https://docs.streamlit.io)
-        - Ask a question in our [community
-          forums](https://discuss.streamlit.io)
-        ### See more complex demos
-        - Use a neural net to [analyze the Udacity Self-driving Car Image
-          Dataset](https://github.com/streamlit/demo-self-driving)
-        - Explore a [New York City rideshare dataset](https://github.com/streamlit/demo-uber-nyc-pickups)
-    """
-    )
+    st.write("### Outcome")
+    if hybrid.price <= fuel.price or hybrid.mileage <= fuel.mileage:
+        st.write("Are you sure the numbers are correct? If yes, you are already in the green!")
+        return
 
+    no_hybrid_distance = calculate_distance_fuel_car_could_travel(fuel, hybrid, settings)
+    breakeven_distance = calculate_breakeven_distance(fuel, hybrid, settings)
+    
+    if settings.simulate_fuel_increase:
+        km, year, fuel_price = calculate_detailed_cost(fuel, hybrid, settings)
+
+    st.markdown(f""" 
+                - The Hybrid car costs {settings.currency} {(hybrid.price - fuel.price):,} more than the Fuel-only car.
+                - If all of it was used to purchase fuel at the provided rate, the fuel car can drive around {round(no_hybrid_distance):,} km.
+                - If the fuel price remained unchanged at {settings.currency} {settings.fuel_price:.2f}, you'd break-even at around {round(breakeven_distance):,} km.
+                    - {"Assuming" if not settings.calculate_at_year_level else "At"} driving {settings.annual_distance:,} km per year, you'd break-even in {round(breakeven_distance / settings.annual_distance, 1)} years.
+                """)
+    if settings.simulate_fuel_increase:
+       st.markdown(f"""
+                - If fuel price were to increase at a rate of {settings.pc_fuel_increase*100}% per year, you'd break-even at around {km:,} km, i.e. in {year} years when the average fuel price would be {settings.currency} {fuel_price}
+                """)
 
 if __name__ == "__main__":
     run()

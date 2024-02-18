@@ -1,3 +1,4 @@
+black
 altair
 numpy
 pandas
