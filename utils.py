@@ -36,7 +36,7 @@ def set_page_header_format():
     st.set_page_config(
     page_title="Hybrid EV Break Even Calculator",
     page_icon="⚡",
-    layout="wide",
+    layout="centered",
     initial_sidebar_state="expanded"
     )
 
