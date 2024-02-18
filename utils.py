@@ -39,7 +39,7 @@ def set_page_header_format():
     layout="centered",
     initial_sidebar_state="expanded"
     )
-
+    st.write('')
     st.markdown(
         """
             <style>

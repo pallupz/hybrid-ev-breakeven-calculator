@@ -9,6 +9,8 @@ LOGGER = get_logger(__name__)
 
 def run():
     set_page_header_format()
+    st.write('')
+
     with st.container(border=True):
         settings = collect_basic_details()
 
@@ -58,6 +60,7 @@ def run():
 
             with col3:
                 st.metric(label=f"After {year} years, fuel would be:", value=f"{settings.currency} {fuel_price} / {settings.fuel_unit}")
+        
         # st.markdown(f""" 
         #             - The Hybrid car costs **{settings.currency} {(hybrid.price - fuel.price):,}** more than the Fuel-only car.
         #             - If all of it was used to purchase fuel at the provided rate, the fuel car can drive around **{round(no_hybrid_distance):,}** km.
