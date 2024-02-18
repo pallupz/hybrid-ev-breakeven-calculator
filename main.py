@@ -28,17 +28,47 @@ def run():
         if settings.simulate_fuel_increase:
             km, year, fuel_price = calculate_detailed_cost(fuel, hybrid, settings)
 
-        st.markdown(f""" 
-                    - The Hybrid car costs {settings.currency} {(hybrid.price - fuel.price):,} more than the Fuel-only car.
-                    - If all of it was used to purchase fuel at the provided rate, the fuel car can drive around {round(no_hybrid_distance):,} km.
-                    - If the fuel price remained unchanged at {settings.currency} {settings.fuel_price:.2f}, you'd break-even at around {round(breakeven_distance):,} km.
-                        - {"Assuming" if not settings.calculate_at_year_level else "At"} driving {settings.annual_distance:,} km per year, you'd break-even in {round(breakeven_distance / settings.annual_distance, 1)} years.
-                    """)
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric(label="Price difference :", value=f"{settings.currency} {(hybrid.price - fuel.price):,}")
+            
+        with col2:
+            st.metric(label="Enough to buy fuel to drive :", value=f"{round(no_hybrid_distance):,} km")
+
+        st.divider()
+        
+        st.write(f"If fuel price remains unchanged at {settings.currency} {settings.fuel_price:.2f} / {settings.fuel_unit} :")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric(label=f"Break-even at:", value=f"{round(breakeven_distance):,} km")
+            
+        with col2:
+            st.metric(label=f"Driving {settings.annual_distance:,} km per year, break-even in:", value=f"{round(breakeven_distance / settings.annual_distance, 1)} years")
+
         if settings.simulate_fuel_increase:
-            st.markdown(f"""
-                        - If fuel price were to increase at a rate of {settings.pc_fuel_increase*100}% per year, you'd break-even at around {km:,} km 
-                            - {"Assuming" if not settings.calculate_at_year_level else "At"} driving {settings.annual_distance:,} km per year, you'd break-even in {year} years when the average fuel price would be {settings.currency} {fuel_price}.
-                        """)
+            st.divider()
+            
+            st.write(f"If fuel price increases {settings.pc_fuel_increase*100}% per year :")
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric(label=f"Break-even at:", value=f"{km:,} km")
+                
+            with col2:
+                st.metric(label=f"Driving {settings.annual_distance:,} km per year, break-even in:", value=f"{year} years")
+
+            with col3:
+                st.metric(label=f"After {year} years, fuel would be:", value=f"{settings.currency} {fuel_price} / {settings.fuel_unit}")
+        # st.markdown(f""" 
+        #             - The Hybrid car costs **{settings.currency} {(hybrid.price - fuel.price):,}** more than the Fuel-only car.
+        #             - If all of it was used to purchase fuel at the provided rate, the fuel car can drive around **{round(no_hybrid_distance):,}** km.
+        #             - If the fuel price remained unchanged at {settings.currency} {settings.fuel_price:.2f}, you'd break-even at around {round(breakeven_distance):,} km.
+        #                 - {"Assuming" if not settings.calculate_at_year_level else "At"} driving {settings.annual_distance:,} km per year, you'd break-even in {round(breakeven_distance / settings.annual_distance, 1)} years.
+        #             """)
+        # if settings.simulate_fuel_increase:
+        #     st.markdown(f"""
+        #                 - If fuel price were to increase at a rate of {settings.pc_fuel_increase*100}% per year, you'd break-even at around {km:,} km 
+        #                     - {"Assuming" if not settings.calculate_at_year_level else "At"} driving {settings.annual_distance:,} km per year, you'd break-even in {year} years when the average fuel price would be {settings.currency} {fuel_price}.
+        #                 """)
 
 if __name__ == "__main__":
     run()

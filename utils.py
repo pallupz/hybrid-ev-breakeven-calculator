@@ -57,12 +57,12 @@ def set_page_header_format():
     navbar = """
         <style>
             .navbar {
-                background-color: #333;
+                background-color: #A1683A;
                 padding: 10px;
                 color: white;
                 text-align: center;
                 top-margin: 0px;
-                
+                border-radius: 10px;
             }
             .navbar a {
                 color: white;
@@ -79,7 +79,7 @@ def set_page_header_format():
         </div>
     """
     
-    st.markdown("<h1 style='text-align: center; '>Hybrid EV Break Even Calculator</h1>", unsafe_allow_html=True)
+    st.markdown("<h1  style='color: #FFFFFF; text-align: center; '>Hybrid EV Break Even Calculator</h1>", unsafe_allow_html=True)
     st.markdown(navbar, unsafe_allow_html=True)
 
 def collect_basic_details():
@@ -103,7 +103,7 @@ def collect_basic_details():
         
     with fuel_price:
         # Average fuel price input
-        fuel_price_label = f"Average fuel price / {fuel_unit} ({selected_currency}):"
+        fuel_price_label = f"Avg fuel price / {fuel_unit} ({selected_currency}):"
         fuel_price = round(st.number_input(fuel_price_label, min_value=0.01, step=0.1, format="%.2f", value = 2.00), 2)
         
         # Simulate fuel price increase checkbox
