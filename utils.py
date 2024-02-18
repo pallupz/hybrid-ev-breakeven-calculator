@@ -121,7 +121,7 @@ def collect_basic_details():
         selected_mileage_unit = st.selectbox("Mileage Unit:", mileage_unit_options, index=0)
 
         # Simulate fuel price increase checkbox
-        calculate_at_year_level = st.checkbox("Calculate at year level", value=simulate_fuel_increase, disabled=simulate_fuel_increase)
+        calculate_at_year_level = st.checkbox("Change average annual distance", value=simulate_fuel_increase, disabled=simulate_fuel_increase)
         
         if calculate_at_year_level:
             annual_distance_label = "Average annual distance driven"
