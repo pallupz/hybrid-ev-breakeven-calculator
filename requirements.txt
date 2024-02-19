@@ -1,6 +1,5 @@
 black
-altair
 numpy
 pandas
-pydeck
 streamlit
+pydantic

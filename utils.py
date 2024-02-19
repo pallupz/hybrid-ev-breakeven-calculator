@@ -2,29 +2,35 @@ import streamlit as st
 from typing import List, Dict
 import math
 import pandas as pd
+from defaults import DEFAULTS, SETTINGS_MAP
+from helpers import list_all, Currency, Settings, FuelUnit, MileageUnit, Distance, Mileage
 
+# class Settings:
+#     def __init__(self, currency, fuel_price, mileage_unit, simulate_fuel_increase, 
+#                  pc_fuel_increase, fuel_unit, annual_distance, calculate_at_year_level):
+#         self.currency = currency
+#         self.fuel_price = fuel_price
+#         self.simulate_fuel_increase = simulate_fuel_increase
+#         self.pc_fuel_increase = pc_fuel_increase/100
+#         self.mileage_unit = mileage_unit
+#         self.fuel_unit = fuel_unit
+#         self.annual_distance = annual_distance
+#         self.calculate_at_year_level = calculate_at_year_level
+#         self.default_hybrid_car_price = None
+#         self.default_fuel_car_price = None
+#         self.car_price_step = None
+#         self.distance_unit = None
 
-class Settings:
-    def __init__(self, currency, fuel_price, mileage_unit, simulate_fuel_increase, pc_fuel_increase, fuel_unit, annual_distance, calculate_at_year_level):
-        self.currency = currency
-        self.fuel_price = fuel_price
-        self.simulate_fuel_increase = simulate_fuel_increase
-        self.pc_fuel_increase = pc_fuel_increase/100
-        self.mileage_unit = mileage_unit
-        self.fuel_unit = fuel_unit
-        self.annual_distance = annual_distance
-        self.calculate_at_year_level = calculate_at_year_level
-
-    # def set_values(self, currency, fuel_price, mileage_unit, simulate_fuel_increase, pc_fuel_increase):
-    #     self.currency = currency
-    #     self.fuel_price = fuel_price
-    #     self.simulate_fuel_increase = simulate_fuel_increase
-    #     self.pc_fuel_increase = pc_fuel_increase
-    #     self.mileage_unit = mileage_unit
+#     # def set_values(self, currency, fuel_price, mileage_unit, simulate_fuel_increase, pc_fuel_increase):
+#     #     self.currency = currency
+#     #     self.fuel_price = fuel_price
+#     #     self.simulate_fuel_increase = simulate_fuel_increase
+#     #     self.pc_fuel_increase = pc_fuel_increase
+#     #     self.mileage_unit = mileage_unit
     
-    def __str__(self):
-        """Returns a string representation of the settings."""
-        return f"""{vars(self)}"""
+#     def __str__(self):
+#         """Returns a string representation of the settings."""
+#         return f"""{vars(self)}"""
    
 class Car:
     def __init__(self, type, price, mileage):
@@ -91,89 +97,102 @@ def collect_basic_details():
     curr, fuel_unit, fuel_price, mileage_unit = st.columns(4)
     
     with curr:
-        # Currency dropdown
-        currency_options = ["AUD", "INR", "USD", "EUR", "GBP", "CAD", "OTH"]
-        selected_currency = st.selectbox("Currency:", currency_options, index=0)
+        selected_currency = st.selectbox("Currency:", sorted(list_all(Currency)), index=0)
+        selected_currency = Currency(value=selected_currency)
+        defaults = SETTINGS_MAP.get(selected_currency.value)
 
     with fuel_unit:
         # Average fuel price input
-        fuel_unit_options = ["Liter", "Gallon"]
-        selected_fuel_unit = st.selectbox("Fuel Unit:", fuel_unit_options, index=0)
-        fuel_unit = "L" if selected_fuel_unit == "Liter" else "G"
+        fuel_unit_options = sorted(list_all(FuelUnit))
+        selected_fuel_unit = st.selectbox("Fuel Unit:", fuel_unit_options, index=fuel_unit_options.index(defaults.fuel_unit.value))
+        selected_fuel_unit = FuelUnit(value=selected_fuel_unit)
         
     with fuel_price:
         # Average fuel price input
-        fuel_price_label = f"Avg fuel price / {fuel_unit} ({selected_currency}):"
-        fuel_price = round(st.number_input(fuel_price_label, min_value=0.01, step=0.1, format="%.2f", value = 2.00), 2)
+        fuel_price_label = f"Avg fuel price / {selected_fuel_unit.name} ({selected_currency.value}):"
+        fuel_price = round(st.number_input(fuel_price_label, min_value=0.01, step=0.1, format="%.2f", value=float(defaults.fuel_price)), 2)
         
         # Simulate fuel price increase checkbox
-        simulate_fuel_increase = None
+        simulate_fuel_increase = defaults.sim_fuel_price_hike
         simulate_fuel_increase = st.checkbox("Simulate yearly fuel price increase")
 
+        pc_fuel_increase = 0.0
         if simulate_fuel_increase: 
             fuel_increase_label = "Average annual fuel price increase (%)"
             pc_fuel_increase = round(st.number_input(fuel_increase_label, min_value=0.0, max_value=15.0, step=0.1, format="%.1f", key="fuel_increase", value=2.5 if simulate_fuel_increase else None), 2)
         else:
-            pc_fuel_increase = 0
+            pc_fuel_increase = 0.0
     
     with mileage_unit:
         # Average fuel price input
-        mileage_unit_options = ["L/100km", "km/L", "MPG"]
-        selected_mileage_unit = st.selectbox("Mileage Unit:", mileage_unit_options, index=0)
-
+        mileage_unit_options = sorted(list_all(MileageUnit))
+        selected_mileage_unit = st.selectbox("Mileage Unit:", mileage_unit_options, index=mileage_unit_options.index(defaults.mileage_unit.value))
+        selected_mileage_unit = MileageUnit(value=selected_mileage_unit)
+        
         # Simulate fuel price increase checkbox
         calculate_at_year_level = st.checkbox("Change average annual distance", value=simulate_fuel_increase, disabled=simulate_fuel_increase)
         
+        annual_distance = 15000
         if calculate_at_year_level:
-            annual_distance_label = "Average annual distance driven (km)"
-            annual_distance = st.number_input(annual_distance_label, min_value=0, step=1000, key="annual_distance", value=15000 if calculate_at_year_level else None)
-        else:
-            annual_distance = 15000
+            annual_distance_label = f"Average annual distance driven ({defaults.distance_unit.value})"
+            annual_distance = st.number_input(annual_distance_label, min_value=0, step=1000, key="annual_distance", value=int(defaults.annual_distance.get_value_in(defaults.distance_unit)))
+        annual_distance = Distance(value=annual_distance, unit=defaults.distance_unit)
     
-    return Settings(selected_currency, fuel_price, selected_mileage_unit, simulate_fuel_increase, pc_fuel_increase, fuel_unit, annual_distance, calculate_at_year_level)
+    settings = Settings(
+        currency                = selected_currency,
+        fuel_price              = fuel_price,
+        sim_fuel_price_hike     = simulate_fuel_increase,
+        pct_fuel_price_hike     = pc_fuel_increase,
+        mileage_unit            = selected_mileage_unit,
+        fuel_unit               = selected_fuel_unit,
+        annual_distance         = annual_distance,
+        def_hybrid_car_price    = defaults.def_hybrid_car_price,
+        def_fuel_car_price      = defaults.def_fuel_car_price,
+        car_price_step          = defaults.car_price_step,
+        distance_unit           = defaults.distance_unit
+    )
+    return settings
     
-def collect_car_details(car_type: str, settings: Settings, defaults: Dict) -> List[Dict]:    
+def collect_car_details(car_type: str, settings: Settings) -> List[Dict]:    
     st.write(f"#### {car_type} Car Details")
+
+    if car_type.lower() == 'hybrid_car':
+        default_car_price= settings.def_hybrid_car_price
+        default_mileage = Mileage(value=4, unit=MileageUnit.L_100KM)
+    elif car_type.lower() == 'fuel_car':
+        default_car_price= settings.def_fuel_car_price
+        default_mileage = Mileage(value=6, unit=MileageUnit.L_100KM)
+
     price, mileage, normalized_mileage = st.columns(3)
     with price:
-        price_label = f"Approx drive-away price ({settings.currency}):"
+        price_label = f"Approx drive-away price ({settings.currency.value}):"
         price = st.number_input(price_label, 
-                                step=1000,
-                                value=defaults.get('price', None),
+                                step=float(settings.car_price_step),
+                                value=float(default_car_price),
+                                format="%f",
                                 key=f"{car_type}-price")
         price = round(price, 2)
             
     with mileage:
-        mileage_label = f"Mileage ({settings.mileage_unit}):"
+        mileage_label = f"Mileage ({settings.mileage_unit.value}):"
         mileage = st.number_input(mileage_label,
                                   step=0.1, 
-                                  value=defaults.get('mileage', None),
+                                  value=float(default_mileage.get_value_in(settings.mileage_unit)),
                                   key=f"{car_type}-mileage")
-        mileage = round(mileage, 2)
+        mileage = Mileage(value=mileage, unit=settings.mileage_unit)
 
     with normalized_mileage:
-        normalized_mileage = calculate_normalized_mileage(mileage, settings.mileage_unit)
-        normalized_mileage_label = f"Normalized mileage (km/L):"
+        normalized_mileage = mileage.get_value_in(MileageUnit.KMPL)
+        normalized_mileage_label = f"Standardized mileage ({MileageUnit.KMPL.value}):"
         st.text_input(normalized_mileage_label, value=f"{normalized_mileage:.2f}", key=f"{car_type}-normmileage", disabled=True)
 
     return Car(car_type, price, normalized_mileage)
 
-def calculate_normalized_mileage(mileage, mileage_unit):
-    """Returns the appropriate distance unit based on the selected mileage unit."""
-    if mileage_unit == "L/100km":
-        return 100/mileage
-    elif mileage_unit == 'MPG':
-        km_per_gallon = mileage * 1.60934
-        return km_per_gallon / 3.78541
-    elif mileage_unit == 'km/L':
-        return mileage
-    else:
-        ValueError(f'Unrecognized mileage unit: {mileage_unit}')
 
-def calculate_distance_fuel_car_could_travel(fuel: Car, hybrid: Car, settings: Settings):
-    price_difference = hybrid.price - fuel.price
+def calculate_distance_fuel_car_could_travel(fuel_car: Car, hybrid_car: Car, settings: Settings):
+    price_difference = hybrid_car.price - fuel_car.price
     fuel_could_have_purchased = price_difference/settings.fuel_price
-    distance_could_have_travelled = fuel.mileage * fuel_could_have_purchased
+    distance_could_have_travelled = fuel_car.mileage * fuel_could_have_purchased
     
     return distance_could_have_travelled
 
@@ -213,3 +232,19 @@ def calculate_yearly_fuel_price(fuel_price, pc_increase, num_years):
         fuel_price *= (1 + pc_increase)
 
     return pd.DataFrame(data, columns=['year', 'fuel_price'])
+
+def mileage_converter(mileage_in_kmpl, to_unit):
+    if to_unit == 'km/L':
+        return mileage_in_kmpl
+    elif to_unit == 'L/100km':
+        return round(100/mileage_in_kmpl)
+    elif to_unit == 'MPG':
+        return round(mileage_in_kmpl * 2.35214583)
+    else:
+        ValueError(f'Unrecognized mileage unit: {to_unit}')
+
+def distance_converter(distance, to_unit):
+    if to_unit == 'km_to_mi':
+        return round(distance * 0.621371, 2)
+    if to_unit == 'mi_to_km':
+        return round(distance * 1.60934, 2)

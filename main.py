@@ -15,8 +15,8 @@ def run():
         settings = collect_basic_details()
 
     with st.container(border=True):
-        hybrid = collect_car_details('Hybrid', settings, defaults={'price': 45000, 'mileage': 4.0})
-        fuel = collect_car_details('Fuel', settings, defaults={'price': 40000, 'mileage': 6.0})
+        hybrid = collect_car_details('Hybrid_Car', settings)
+        fuel = collect_car_details('Fuel_Car', settings)
     
     with st.container(border=True):
         st.write("### Outcome")
@@ -27,12 +27,12 @@ def run():
         no_hybrid_distance = calculate_distance_fuel_car_could_travel(fuel, hybrid, settings)
         breakeven_distance = calculate_breakeven_distance(fuel, hybrid, settings)
         
-        if settings.simulate_fuel_increase:
+        if settings.sim_fuel_price_hike:
             km, year, fuel_price = calculate_detailed_cost(fuel, hybrid, settings)
 
         col1, col2 = st.columns(2)
         with col1:
-            st.metric(label="Price difference :", value=f"{settings.currency} {(hybrid.price - fuel.price):,}")
+            st.metric(label="Price difference :", value=f"{settings.currency.name} {int(hybrid.price - fuel.price):,}")
             
         with col2:
             st.metric(label="Enough to buy fuel to drive :", value=f"{round(no_hybrid_distance):,} km")
@@ -45,7 +45,7 @@ def run():
             st.metric(label=f"Break-even at:", value=f"{round(breakeven_distance):,} km")
             
         with col2:
-            st.metric(label=f"Driving {settings.annual_distance:,} km per year, break-even in:", value=f"{round(breakeven_distance / settings.annual_distance, 1)} years")
+            st.metric(label=f"At {settings.annual_distance:,} {settings.distance_unit} per year, break-even in:", value=f"{round(breakeven_distance / settings.annual_distance, 1)} years")
 
         if settings.simulate_fuel_increase:
             st.divider()
@@ -56,7 +56,7 @@ def run():
                 st.metric(label=f"Break-even at:", value=f"{km:,} km")
                 
             with col2:
-                st.metric(label=f"Driving {settings.annual_distance:,} km per year, break-even in:", value=f"{year} years")
+                st.metric(label=f"At {settings.annual_distance:,} {settings.distance_unit} per year, break-even in:", value=f"{year} years")
 
             with col3:
                 st.metric(label=f"After {year} years, fuel would be:", value=f"{settings.currency} {fuel_price} / {settings.fuel_unit}")
