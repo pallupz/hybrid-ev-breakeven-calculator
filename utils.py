@@ -5,32 +5,6 @@ import pandas as pd
 from defaults import DEFAULTS, SETTINGS_MAP
 from helpers import list_all, Currency, Settings, FuelUnit, MileageUnit, Distance, Mileage
 
-# class Settings:
-#     def __init__(self, currency, fuel_price, mileage_unit, simulate_fuel_increase, 
-#                  pc_fuel_increase, fuel_unit, annual_distance, calculate_at_year_level):
-#         self.currency = currency
-#         self.fuel_price = fuel_price
-#         self.simulate_fuel_increase = simulate_fuel_increase
-#         self.pc_fuel_increase = pc_fuel_increase/100
-#         self.mileage_unit = mileage_unit
-#         self.fuel_unit = fuel_unit
-#         self.annual_distance = annual_distance
-#         self.calculate_at_year_level = calculate_at_year_level
-#         self.default_hybrid_car_price = None
-#         self.default_fuel_car_price = None
-#         self.car_price_step = None
-#         self.distance_unit = None
-
-#     # def set_values(self, currency, fuel_price, mileage_unit, simulate_fuel_increase, pc_fuel_increase):
-#     #     self.currency = currency
-#     #     self.fuel_price = fuel_price
-#     #     self.simulate_fuel_increase = simulate_fuel_increase
-#     #     self.pc_fuel_increase = pc_fuel_increase
-#     #     self.mileage_unit = mileage_unit
-    
-#     def __str__(self):
-#         """Returns a string representation of the settings."""
-#         return f"""{vars(self)}"""
    
 class Car:
     def __init__(self, type, price, mileage):
