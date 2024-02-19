@@ -45,11 +45,11 @@ def set_page_header_format():
             }
         </style>
         <div class="navbar">
-            <a href="https://www.example.com">LinkedIn</a>
+            <a href="https://www.linkedin.com/in/antony-pallupetta">LinkedIn</a>
             <a> | </a>
-            <a href="https://www.example.com">Github</a>
+            <a href="https://github.com/pallupz/hybrid-ev-breakeven-calculator">Github</a>
             <a> | </a>
-            <a href="https://www.example.com">Buy me a coffee</a>
+            <a href="https://www.buymeacoffee.com/pallupz">Buy me a coffee</a>
         </div>
     """
     
