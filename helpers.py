@@ -16,16 +16,16 @@ class DistanceUnit(Enum):
 
 class FuelUnit(Enum):
     L = "Liter"
-    USGa = "US Gal."
-    UKGa = "UK Gal."
+    USGa = "US Gal"
+    UKGa = "UK Gal"
 
 
 class Fuel(pydantic.BaseModel):
     value: float
     unit: FuelUnit
 
-    def get_value_in(self, target_unit: FuelUnit) -> float:
-        return convert_fuel(self, target_unit).value
+    def get_value_in(self, target_unit: FuelUnit):
+        return convert_fuel(self, target_unit)
 
 
 class MileageUnit(Enum):
@@ -39,13 +39,13 @@ class Distance(pydantic.BaseModel):
     value: float
     unit: DistanceUnit
 
-    def get_value_in(self, target_unit: DistanceUnit) -> float:
+    def get_value_in(self, target_unit: DistanceUnit):
         if self.unit == target_unit:
-            return self.value
+            return Distance(value=self.value, unit=target_unit)
         elif self.unit == DistanceUnit.km and target_unit == DistanceUnit.mi:
-            return round(self.value / 1.60934, 2)
+            return Distance(value=round(self.value / 1.60934, 2), unit=target_unit)
         elif self.unit == DistanceUnit.mi and target_unit == DistanceUnit.km:
-            return round(self.value * 1.60934, 2)
+            return Distance(round(self.value * 1.60934, 2), unit=target_unit)
         else:
             raise ValueError(f"Unsupported DistanceUnit: {DistanceUnit}")
 
@@ -54,15 +54,18 @@ class Mileage(pydantic.BaseModel):
     value: float
     unit: MileageUnit
 
-    def get_value_in(self, target_unit: MileageUnit) -> float:
-        return convert_mileage(self, target_unit).value
+    def get_value_in(self, target_unit: MileageUnit):
+        return convert_mileage(self, target_unit)
     
-
 
 class Car(pydantic.BaseModel):
     type: str
     price: int
     mileage: Mileage
+    
+    @property
+    def standardized_mileage(self) -> Mileage:
+        return self.mileage.get_value_in(MileageUnit.KMPL)
 
 class Settings(pydantic.BaseModel):
     currency: Currency
