@@ -2,10 +2,10 @@ import streamlit as st
 from typing import List, Dict
 import math
 import pandas as pd
-from defaults import DEFAULTS, SETTINGS_MAP
+from defaults import SETTINGS_MAP
 from helpers import list_all, Currency, Settings, FuelUnit, MileageUnit, Distance, Mileage
 
-   
+
 class Car:
     def __init__(self, type, price, mileage):
         self.type = type

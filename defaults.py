@@ -1,28 +1,5 @@
 from helpers import Settings, Currency, MileageUnit, FuelUnit, Distance, DistanceUnit
 
-DEFAULTS = {
-    'AUD' : {
-        'fuel_unit': 'Liter',
-        'distance_unit': 'km',
-        'fuel_price': 2,
-        'fuel_price_step': 0.1,
-        'mileage_unit': 'L/100km',
-        'hybrid_car_price': 45000,
-        'fuel_car_price': 40000,
-        'car_price_step': 500,
-        },
-    'INR' : {
-        'fuel_unit': 'Liter',
-        'distance_unit': 'mi',
-        'fuel_price': 105,
-        'fuel_price_step': 2,
-        'mileage_unit': 'km/L',
-        'hybrid_car_price': 1300000,
-        'fuel_car_price': 1050000,
-        'car_price_step': 50000,
-        }
-}
-
 AUD_SETTINGS = Settings(
     currency=Currency.AUD,
     fuel_price=2.0,
