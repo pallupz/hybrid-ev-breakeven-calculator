@@ -1,7 +1,5 @@
-# Welcome to streamlit
+# Welcome to Hybrid EV Break-Even Calculator
 
-This is the app you get when you run `streamlit hello`, extracted as its own app.
+Link: https://hybrid-ev-breakeven-calculator.streamlit.app/
 
-Edit [Hello.py](./Hello.py) to customize this app to your heart's desire. ❤️
-
-Check it out on [Streamlit Community Cloud](https://st-hello-app.streamlit.app/)
+This project provides a tool to estimate the break-even point between a hybrid electric vehicle (HEV) and a traditional gasoline-powered vehicle (ICEV).
