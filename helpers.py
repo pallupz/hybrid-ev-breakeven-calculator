@@ -45,7 +45,7 @@ class Distance(pydantic.BaseModel):
         elif self.unit == DistanceUnit.km and target_unit == DistanceUnit.mi:
             return Distance(value=round(self.value / 1.60934, 2), unit=target_unit)
         elif self.unit == DistanceUnit.mi and target_unit == DistanceUnit.km:
-            return Distance(round(self.value * 1.60934, 2), unit=target_unit)
+            return Distance(value=round(self.value * 1.60934, 2), unit=target_unit)
         else:
             raise ValueError(f"Unsupported DistanceUnit: {DistanceUnit}")
 
