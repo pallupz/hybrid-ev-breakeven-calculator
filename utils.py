@@ -83,7 +83,7 @@ def collect_basic_details():
         
         # Simulate fuel price increase checkbox
         simulate_fuel_increase = defaults.sim_fuel_price_hike
-        simulate_fuel_increase = st.checkbox("Simulate yearly fuel price increase")
+        simulate_fuel_increase = st.checkbox("Simulate yearly fuel price increase", value=simulate_fuel_increase)
 
         pc_fuel_increase = 0.0
         if simulate_fuel_increase: 
