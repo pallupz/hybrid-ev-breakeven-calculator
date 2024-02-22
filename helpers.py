@@ -20,19 +20,27 @@ class FuelUnit(Enum):
     UKGa = "UK Gal"
 
 
-class Fuel(pydantic.BaseModel):
+class FuelQuantity(pydantic.BaseModel):
     value: float
     unit: FuelUnit
 
     def get_value_in(self, target_unit: FuelUnit):
-        return convert_fuel(self, target_unit)
+        return convert_fuel_quantity(self, target_unit)
+
+
+class FuelPrice(pydantic.BaseModel):
+    value: float
+    per_unit: FuelUnit
+
+    def get_value_per(self, target_unit: FuelUnit):
+        return convert_fuel_price(self, target_unit)
 
 
 class MileageUnit(Enum):
     KMPL = "km/L"
     L_100KM = "L/100km"
-    MPG_US = "MPG (US)"
-    MPG_UK = "MPG (UK)"
+    MPG_US = "MPG-US"
+    MPG_UK = "MPG-UK"
 
 
 class Distance(pydantic.BaseModel):
@@ -62,14 +70,24 @@ class Car(pydantic.BaseModel):
     type: str
     price: int
     mileage: Mileage
+    cost_per_km: float = None
     
     @property
     def standardized_mileage(self) -> Mileage:
         return self.mileage.get_value_in(MileageUnit.KMPL)
 
+    @property
+    def cost_per_km(self):
+        return self.cost_per_km
+    
+    @cost_per_km.setter
+    def name(self, cost_per_km: float):
+        self.cost_per_km = cost_per_km
+
+
 class Settings(pydantic.BaseModel):
     currency: Currency
-    fuel_price: float
+    fuel_price: FuelPrice
     sim_fuel_price_hike: bool
     pct_fuel_price_hike: float
     mileage_unit: MileageUnit
@@ -81,34 +99,52 @@ class Settings(pydantic.BaseModel):
     distance_unit: DistanceUnit
 
 
-def convert_to_litre(fuel: Fuel) -> Fuel:
+def convert_to_litre(fuel: FuelQuantity) -> FuelQuantity:
     if fuel.unit == FuelUnit.L:
         return fuel
     elif fuel.unit == FuelUnit.USGa:
-        return Fuel(value=round(fuel.value * 3.785, 2), unit=FuelUnit.L)
+        return FuelQuantity(value=round(fuel.value * 3.785, 2), unit=FuelUnit.L)
     elif fuel.unit == FuelUnit.UKGa:
-        return Fuel(value=round(fuel.value * 4.546, 2), unit=FuelUnit.L)
+        return FuelQuantity(value=round(fuel.value * 4.546, 2), unit=FuelUnit.L)
     else:
         raise ValueError(f"Unsupported FuelUnit: {FuelUnit}")
     
 
-def convert_from_litre(fuel: Fuel, target_unit: FuelUnit) -> Fuel:
+def convert_from_litre(fuel: FuelQuantity, target_unit: FuelUnit) -> FuelQuantity:
     if fuel.unit != FuelUnit.L:
         raise TypeError(f"Unsupported unit: {fuel.unit}. Input to this function should have type {FuelUnit.L}") 
     elif target_unit == FuelUnit.L:
         return fuel
     elif target_unit == FuelUnit.USGa:
-        return Fuel(value=round(fuel.value / 3.785, 2), unit=target_unit)
+        return FuelQuantity(value=round(fuel.value / 3.785, 2), unit=target_unit)
     elif target_unit == FuelUnit.UKGa:
-        return Fuel(value=round(fuel.value / 4.546, 2), unit=target_unit)
+        return FuelQuantity(value=round(fuel.value / 4.546, 2), unit=target_unit)
     else:
         raise ValueError(f"Unsupported MileageUnit: {FuelUnit}")
 
 
-def convert_fuel(fuel: Fuel, target_unit: FuelUnit) -> Fuel:
+def convert_fuel_quantity(fuel: FuelQuantity, target_unit: FuelUnit) -> FuelQuantity:
     if fuel.unit == target_unit:
         return fuel
     return convert_from_litre(convert_to_litre(fuel), target_unit)
+
+
+def convert_fuel_price(fuel_price: FuelPrice, target_unit: FuelUnit) -> FuelPrice:
+    def convert_to_per_liter(fuel_price: FuelPrice) -> FuelPrice:
+        if fuel_price.per_unit == FuelUnit.L:
+            return fuel_price
+        value = round(fuel_price.value / convert_to_litre(FuelQuantity(value=1, unit=fuel_price.per_unit)).value, 2)
+        return FuelPrice(value=value, per_unit=FuelUnit.L)
+
+    def convert_from_per_liter(fuel_price: FuelPrice, target_unit: FuelUnit) -> FuelPrice:
+        if fuel_price.per_unit == target_unit:
+            return fuel_price
+        value = round(fuel_price.value / convert_from_litre(FuelQuantity(value=1, unit=FuelUnit.L), target_unit).value, 2)
+        return FuelPrice(value=value, per_unit=target_unit)
+
+    if fuel_price.per_unit == target_unit:
+        return fuel_price
+    return convert_from_per_liter(convert_to_per_liter(fuel_price), target_unit)
 
 
 def convert_to_kmpl(mileage: Mileage) -> Mileage:
@@ -149,6 +185,3 @@ def convert_mileage(mileage: Mileage, target_unit: MileageUnit) -> Mileage:
 
 def list_all(Enum):
     return [item.value for item in Enum]
-
-
-

@@ -1,12 +1,12 @@
-from helpers import Settings, Currency, MileageUnit, FuelUnit, Distance, DistanceUnit
+from helpers import Settings, Currency, MileageUnit, FuelUnit, Distance, DistanceUnit, FuelPrice
 
 AUD_SETTINGS = Settings(
     currency=Currency.AUD,
-    fuel_price=2.0,
+    fuel_price=FuelPrice(value=2.0, per_unit=FuelUnit.L),
+    fuel_unit=FuelUnit.L,
     sim_fuel_price_hike=False,
     pct_fuel_price_hike=2.5,
     mileage_unit=MileageUnit.L_100KM,
-    fuel_unit=FuelUnit.L,
     annual_distance=Distance(value=15_000, unit=DistanceUnit.km),
     def_hybrid_car_price=45_000,
     def_fuel_car_price=40_000,
@@ -16,7 +16,7 @@ AUD_SETTINGS = Settings(
 
 INR_SETTINGS = Settings(
     currency=Currency.INR,
-    fuel_price=101.0,
+    fuel_price=FuelPrice(value=100.0, per_unit=FuelUnit.L),
     sim_fuel_price_hike=False,
     pct_fuel_price_hike=2.5,
     mileage_unit=MileageUnit.KMPL,
@@ -30,26 +30,26 @@ INR_SETTINGS = Settings(
 
 USD_SETTINGS = Settings(
     currency=Currency.USD,
-    fuel_price=3.1,
+    fuel_price=FuelPrice(value=4.4, per_unit=FuelUnit.USGa),
+    fuel_unit=FuelUnit.USGa,
     sim_fuel_price_hike=False,
     pct_fuel_price_hike=2.5,
     mileage_unit=MileageUnit.MPG_US,
-    fuel_unit=FuelUnit.USGa,
-    annual_distance=Distance(value=15_000, unit=DistanceUnit.mi),
-    def_hybrid_car_price=35_000,
-    def_fuel_car_price=30_000,
+    annual_distance=Distance(value=13_500, unit=DistanceUnit.mi),
+    def_hybrid_car_price=30_000,
+    def_fuel_car_price=25_000,
     car_price_step=1_000,
     distance_unit=DistanceUnit.mi,
 )
 
 GBP_SETTINGS = Settings(
     currency=Currency.GBP,
-    fuel_price=1.7,
+    fuel_price=FuelPrice(value=1.7, per_unit=FuelUnit.L),
+    fuel_unit=FuelUnit.L,
     sim_fuel_price_hike=False,
     pct_fuel_price_hike=2.5,
     mileage_unit=MileageUnit.MPG_US,
-    fuel_unit=FuelUnit.L,
-    annual_distance=Distance(value=15_000, unit=DistanceUnit.mi),
+    annual_distance=Distance(value=10_000, unit=DistanceUnit.mi),
     def_hybrid_car_price=40_000,
     def_fuel_car_price=35_000,
     car_price_step=1_000,

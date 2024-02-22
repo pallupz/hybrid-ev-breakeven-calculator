@@ -3,7 +3,7 @@ from typing import List, Dict
 import math
 import pandas as pd
 from defaults import SETTINGS_MAP
-from helpers import list_all, Currency, Settings, FuelUnit, MileageUnit, Distance, Mileage, Fuel, Car, DistanceUnit
+from helpers import Currency, Settings, FuelUnit, MileageUnit, Distance, Mileage, FuelQuantity, FuelPrice, Car, DistanceUnit, list_all, convert_fuel_price
 
 
 def set_page_header_format():
@@ -78,7 +78,8 @@ def collect_basic_details():
     with fuel_price:
         # Average fuel price input
         fuel_price_label = f"Avg fuel price / {selected_fuel_unit.name} ({selected_currency.value}):"
-        fuel_price = round(st.number_input(fuel_price_label, min_value=0.01, step=0.1, format="%.2f", value=float(defaults.fuel_price)), 2)
+        fuel_price = round(st.number_input(fuel_price_label, min_value=0.01, step=0.1, format="%.2f", value=float(defaults.fuel_price.value)), 2)
+        fuel_price = FuelPrice(value=fuel_price, per_unit=selected_fuel_unit)
         
         # Simulate fuel price increase checkbox
         simulate_fuel_increase = defaults.sim_fuel_price_hike
@@ -146,16 +147,19 @@ def collect_car_details(car_type: str, settings: Settings) -> Car:
         mileage = Mileage(value=mileage, unit=settings.mileage_unit)
     
     car = Car(type=car_type, price=price, mileage=mileage)
+    car.cost_per_km = calculate_per_km_cost(car, settings.fuel_price)
     
     with standardized_mileage:
-        standardized_mileage_label = f"Standardized mileage ({car.standardized_mileage.unit.value}):"
-        st.text_input(standardized_mileage_label, value=f"{car.standardized_mileage.value:.2f}", key=f"{car_type}-stdmileage", disabled=True)
+        # standardized_mileage_label = f"Standardized mileage ({car.standardized_mileage.unit.value}):"
+        # st.text_input(standardized_mileage_label, value=f"{car.standardized_mileage.value:.2f}", key=f"{car_type}-stdmileage", disabled=True)
 
+        per_km_cost_label = f"Running cost per {settings.distance_unit.name} ({settings.currency.value}):"
+        st.text_input(per_km_cost_label, value=f"{car.cost_per_km / Distance(value=1, unit=DistanceUnit.km).get_value_in(settings.distance_unit).value:.2f}", key=f"{car_type}-costpkm", disabled=True)
     return car
 
 def calculate_distance_fuel_car_could_travel(fuel_car: Car, hybrid_car: Car, settings: Settings):
     price_difference = hybrid_car.price - fuel_car.price
-    fuel_could_have_purchased = Fuel(value=price_difference/settings.fuel_price, unit=settings.fuel_unit)
+    fuel_could_have_purchased = FuelQuantity(value=price_difference/settings.fuel_price.value, unit=settings.fuel_price.per_unit)
     distance_could_have_travelled = Distance(value=fuel_car.standardized_mileage.value * fuel_could_have_purchased.get_value_in(FuelUnit.L).value,
                                              unit=DistanceUnit.km)
     
@@ -163,9 +167,7 @@ def calculate_distance_fuel_car_could_travel(fuel_car: Car, hybrid_car: Car, set
 
 def calculate_breakeven_distance(fuel_car: Car, hybrid_car: Car, settings: Settings):
     price_difference = hybrid_car.price - fuel_car.price
-    cost_to_run_fuel_car_per_km = (1 / fuel_car.standardized_mileage.value) * settings.fuel_price * Fuel(value=1, unit=settings.fuel_unit).get_value_in(FuelUnit.L).value
-    cost_to_run_hybrid_car_per_km = (1 / hybrid_car.standardized_mileage.value) * settings.fuel_price * Fuel(value=1, unit=settings.fuel_unit).get_value_in(FuelUnit.L).value
-    breakeven_distance = Distance(value=price_difference / (cost_to_run_fuel_car_per_km - cost_to_run_hybrid_car_per_km),
+    breakeven_distance = Distance(value=price_difference / (fuel_car.cost_per_km - hybrid_car.cost_per_km),
                                   unit=DistanceUnit.km)
     return breakeven_distance
 
@@ -173,7 +175,7 @@ def calculate_detailed_cost(fuel_car: Car, hybrid_car: Car, settings: Settings):
     rough_breakeven_distance = calculate_breakeven_distance(fuel_car, hybrid_car, settings)
     rough_num_years = math.ceil(rough_breakeven_distance.get_value_in(DistanceUnit.km).value / settings.annual_distance.get_value_in(DistanceUnit.km).value)
     
-    fuel_price_df = calculate_yearly_fuel_price(settings.fuel_price, settings.pct_fuel_price_hike, rough_num_years)
+    fuel_price_df = calculate_yearly_fuel_price(settings.fuel_price.get_value_per(FuelUnit.L), settings.pct_fuel_price_hike, rough_num_years)
 
     data = []
     for distance_period in range(1, math.ceil(rough_breakeven_distance.get_value_in(DistanceUnit.km).value)):
@@ -183,39 +185,30 @@ def calculate_detailed_cost(fuel_car: Car, hybrid_car: Car, settings: Settings):
     df = pd.DataFrame(data, columns=['km', 'year'])
     df = pd.merge(df, fuel_price_df, on='year')
     
-    df['hybird_car_running_cost'] = df.km * (1 / hybrid_car.standardized_mileage.value) * df.fuel_price * Fuel(value=1, unit=settings.fuel_unit).get_value_in(FuelUnit.L).value
-    df['fuel_car_running_cost'] = df.km * (1 / fuel_car.standardized_mileage.value) * df.fuel_price * Fuel(value=1, unit=settings.fuel_unit).get_value_in(FuelUnit.L).value
+    df['hybird_car_running_cost'] = df.km * (1 / hybrid_car.standardized_mileage.value) * df.fuel_price
+    df['fuel_car_running_cost'] = df.km * (1 / fuel_car.standardized_mileage.value) * df.fuel_price
     df['cost_difference'] = df.fuel_car_running_cost - df.hybird_car_running_cost
     df['year_pct'] = round(df['year'] - 1 + ((df.km % settings.annual_distance.get_value_in(DistanceUnit.km).value) / settings.annual_distance.get_value_in(DistanceUnit.km).value), 1)
 
-    df = df.where(df.cost_difference > hybrid_car.price - fuel_car.price).dropna().head(1)
-    # st.write(df)
-    distance = Distance(value=int(df.km.iloc[0]), unit=DistanceUnit.km)
-    years = df.year_pct.iloc[0]
-    fuel_price = df.fuel_price.iloc[0]
+    tmp_df = df.where(df.cost_difference > hybrid_car.price - fuel_car.price).dropna().head(1)
+    distance = Distance(value=int(tmp_df.km.iloc[0]), unit=DistanceUnit.km)
+    years = tmp_df.year_pct.iloc[0]
+    fuel_price = FuelPrice(value=tmp_df.fuel_price.iloc[0], per_unit= FuelUnit.L)
 
-    return (distance, years, fuel_price)
+    return (df, distance, years, fuel_price)
 
-def calculate_yearly_fuel_price(fuel_price, pc_increase, num_years):
+def calculate_yearly_fuel_price(fuel_price: FuelPrice, pc_increase: float, num_years: int):
+    fuel_unit = fuel_price.per_unit.name
+    fuel_price = fuel_price.value
+    
     data = []
     for period_number in range(1, num_years + 1):
-        data.append((period_number, round(fuel_price, 2)))
+        data.append((period_number, round(fuel_price, 2), fuel_unit))
         fuel_price *= (1 + pc_increase/100)
 
-    return pd.DataFrame(data, columns=['year', 'fuel_price'])
+    return pd.DataFrame(data, columns=['year', 'fuel_price', 'fuel_unit'])
 
-def mileage_converter(mileage_in_kmpl, to_unit):
-    if to_unit == 'km/L':
-        return mileage_in_kmpl
-    elif to_unit == 'L/100km':
-        return round(100/mileage_in_kmpl)
-    elif to_unit == 'MPG':
-        return round(mileage_in_kmpl * 2.35214583)
-    else:
-        ValueError(f'Unrecognized mileage unit: {to_unit}')
-
-def distance_converter(distance, to_unit):
-    if to_unit == 'km_to_mi':
-        return round(distance * 0.621371, 2)
-    if to_unit == 'mi_to_km':
-        return round(distance * 1.60934, 2)
+def calculate_per_km_cost(car: Car, fuel_price: FuelPrice):
+    mileage_in_kmpl = car.mileage.get_value_in(MileageUnit.KMPL).value
+    fuel_price_in_l = convert_fuel_price(fuel_price, FuelUnit.L).value
+    return round(fuel_price_in_l / mileage_in_kmpl, 2)
