@@ -101,7 +101,8 @@ def collect_basic_details():
         # Simulate fuel price increase checkbox
         calculate_at_year_level = st.checkbox("Change average annual distance", value=simulate_fuel_increase, disabled=simulate_fuel_increase)
         
-        annual_distance = 15000
+        default_annual_distance = int(defaults.annual_distance.get_value_in(defaults.distance_unit).value)
+        annual_distance = default_annual_distance if default_annual_distance else 15000
         if calculate_at_year_level:
             annual_distance_label = f"Average annual distance driven ({defaults.distance_unit.value})"
             annual_distance = st.number_input(annual_distance_label, min_value=0, step=1000, key="annual_distance", value=int(defaults.annual_distance.get_value_in(defaults.distance_unit).value))
@@ -185,9 +186,9 @@ def calculate_detailed_cost(fuel_car: Car, hybrid_car: Car, settings: Settings):
     df = pd.DataFrame(data, columns=['km', 'year'])
     df = pd.merge(df, fuel_price_df, on='year')
     
-    df['hybird_car_running_cost'] = df.km * (1 / hybrid_car.standardized_mileage.value) * df.fuel_price
-    df['fuel_car_running_cost'] = df.km * (1 / fuel_car.standardized_mileage.value) * df.fuel_price
-    df['cost_difference'] = df.fuel_car_running_cost - df.hybird_car_running_cost
+    df["Hybrid Cost"] = df.km * (1 / hybrid_car.standardized_mileage.value) * df.fuel_price
+    df["Non-Hybrid Cost"] = df.km * (1 / fuel_car.standardized_mileage.value) * df.fuel_price
+    df['cost_difference'] = df["Non-Hybrid Cost"] - df["Hybrid Cost"]
     df['year_pct'] = round(df['year'] - 1 + ((df.km % settings.annual_distance.get_value_in(DistanceUnit.km).value) / settings.annual_distance.get_value_in(DistanceUnit.km).value), 1)
 
     tmp_df = df.where(df.cost_difference > hybrid_car.price - fuel_car.price).dropna().head(1)

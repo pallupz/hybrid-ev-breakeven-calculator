@@ -1,9 +1,11 @@
 import streamlit as st
+import altair as alt
 from streamlit.logger import get_logger
+
+from helpers import Distance, DistanceUnit
 from utils import set_page_header_format, collect_basic_details, \
                   collect_car_details, calculate_distance_fuel_car_could_travel, \
                   calculate_breakeven_distance, calculate_detailed_cost
-from helpers import Distance, DistanceUnit
 
 LOGGER = get_logger(__name__)
 
@@ -43,7 +45,7 @@ def run():
         st.divider()
         
         st.write(f"If the average fuel price remains unchanged at {settings.currency.name} {settings.fuel_price.value:.2f} / {settings.fuel_price.per_unit.name} :")
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3 = st.columns([1.75, 2, 2])
         with col1:
             st.metric(label=f"Break-even at:", 
                       value=f"{round(breakeven_distance.get_value_in(settings.distance_unit).value):,} {settings.distance_unit.value}")
@@ -64,7 +66,7 @@ def run():
             df, inc_breakeven_distance, inc_years, inc_fuel_price = calculate_detailed_cost(fuel_car, hybrid_car, settings)
             
             st.write(f"If the average fuel price increases {settings.pct_fuel_price_hike}% per year :")
-            col1, col2, col3 = st.columns(3)
+            col1, col2, col3 = st.columns([1.75, 2, 2])
             with col1:
                 st.metric(label=f"Break-even at:", 
                           value=f"{int(inc_breakeven_distance.get_value_in(settings.distance_unit).value):,} {settings.distance_unit.value}")
@@ -76,7 +78,11 @@ def run():
             with col3:
                 st.metric(label=f"After {int(inc_years)} years, fuel would be:", 
                           value=f"{settings.currency.value} {inc_fuel_price.get_value_per(settings.fuel_unit).value} / {settings.fuel_unit.name}")
+            st.divider()
+            st.markdown("""##### Cost Comparison by Kilometers""")
+            st.line_chart(df, x="km", y=["Hybrid Cost", "Non-Hybrid Cost"])
 
+                        
     st.caption("""Note: Above calculations do not take into consideration other factors such as Cost of Ownership""")
     st.write(' ')
     st.write(' ')
