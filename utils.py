@@ -62,7 +62,7 @@ def collect_basic_details():
     st.write("#### General Details")
 
     # Split setup elements into two columns
-    curr, fuel_unit, fuel_price, mileage_unit = st.columns(4)
+    curr, fuel_unit, fuel_price, mileage_unit = st.columns([1, 1.1, 2, 2])
     
     with curr:
         selected_currency = st.selectbox("Currency:", sorted(list_all(Currency)), index=0)
